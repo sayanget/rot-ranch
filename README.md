@@ -1,21 +1,40 @@
-# roblox-brainrot-01 starter
+# Rot Ranch (腐烂牧场)
 
-A working entry for make.fun's "Make the best AI Roblox brainrot game" bounty (roblox-brainrot-01), laid out as your
-repository: a Rojo project whose game is a grey square that moves with the arrow keys. It is a starting point, not a
-winner, and not yet the 3D game the bounty asks for: its square is drawn on the screen, not in Roblox's 3D world.
+[![make.fun · roblox-brainrot-01](https://make.fun/badge/roblox-brainrot-01.svg)](https://make.fun/bounty/roblox-brainrot-01?utm_source=github&utm_medium=readme&utm_campaign=roblox-brainrot-01)
+[![rank](https://make.fun/badge/roblox-brainrot-01/sayanget/rot-ranch/rank.svg)](https://make.fun/bounty/roblox-brainrot-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=roblox-brainrot-01)
+[![reward](https://make.fun/badge/roblox-brainrot-01/sayanget/rot-ranch/reward.svg)](https://make.fun/bounty/roblox-brainrot-01?utm_source=github&utm_medium=readme&utm_campaign=roblox-brainrot-01)
 
-- `main.ts` (Node 22, standard library only) hands the game in: it copies `game.rbxl`, `src/`, `screenshots/` and
-  `PLAY.json` to `/output`, leaving out every name that starts with a dot (such as `.gitkeep` or `.DS_Store`, which
-  fail an entry), and writes `/output/dossier.json` with `vendor/makefun-roblox.ts`, the kit's copy, unchanged.
-- `game.rbxl` is the place Rojo builds from `src/` and `default.project.json`; `screenshots/` holds three captures of
-  it; `PLAY.json` names no place yet, so the gate refuses the starter as it stands until it names your published one.
-- One of your screenshots must also be your game's first thumbnail on Roblox: the same picture, uploaded on the
-  Creator Dashboard with your game's icon.
-- `TOUR.json` is an example of the optional tour: for each screenshot, the keys that bring the game to that screen.
+A 3D brainrot ranch for make.fun's roblox-brainrot-01 bounty. Play: https://www.roblox.com/games/70608989520373
 
-Run it as the grader does, writing `out/` in place of `/output`:
+**The loop.** Walk your R15 rancher (WASD, Shift to sprint) out to the **Cattle Drive**, the dirt trail
+where critters trot from the Rot Corral to Dust Canyon wearing their price tags. Hold **E** to lasso one:
+it flies over the fence into a free stall of your ranch and starts paying its money a second, with a
+"+$" pop over its head every tick. Climb the ladder (Common, Uncommon, Rare, Epic, Legendary, Mythic,
+Rotten God), hope for Golden (x3) or Moldy (x2) mutations, then **Rebirth** (R) for a permanent cash
+multiplier, two more stalls, a longer gate lock and rarer critters on the drive.
 
-    mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
+**The tension.** Every ranch has a gate. Hold **E** on a critter behind a rival's *open* gate to rustle it
+and run it home over your head (slower, and you drop it if you fall). Lock your own gate (**L**, the HUD
+button or the LOCK pad, only from inside your ranch). Masked rustlers ride in to raid open ranches: tag
+one to win your critter back. Every couple of minutes the dust rises over Dust Canyon: **STAMPEDE IN 10**,
+then a herd of glowing-eyed rot bulls thunders down the whole drive. Anyone caught in the open is thrown,
+drops what they carry and loses 15% of their cash. Behind a fence you are safe.
 
-The rules are on the bounty's page (/bounty/roblox-brainrot-01) and in the kit's RULES.txt,
-which gives every command in order (Before you submit, then Enter).
+**The cast** (all original): Spudmoo (potato cow), Cluckaroni (macaroni chicken), Hamwich Hog (sandwich
+pig), Baagel Bleatski (bagel sheep), Goatcho Supremo (nacho goat), Toastallion (toaster horse),
+Llamplighter (lamp llama), Duckwaffle Deluxe, Tractortoise, Sheriff Scarecrowbar, Disco Udderlord and
+The Grand Rotfather. Each is its own part-built silhouette, labelled with name, rarity and $/s.
+
+## Layout
+
+- `default.project.json` describes the world (prairie, drive, red barn, silo, water tower, Rot Corral,
+  Dust Canyon, golden-hour lighting) and maps the scripts.
+- `src/shared` (ReplicatedStorage): `Cast` (critters, rarities, mutations, prices, rebirth rules), `Controls`.
+- `src/server/Ranch.server.luau` boots the server; `src/ranch` (ServerStorage): `Ledger` (all state),
+  `CattleDrive`, `Pens`, `Income`, `Rustling`, `Stampede`, `Rebirth`; `src/workshop`: `World`, `Critters`.
+- `src/client`: `RanchClient` (ReplicatedFirst) and `Hud` (StarterPlayerScripts).
+
+Build with `rojo build default.project.json --output game.rbxl`; hand in with
+`mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts`.
+
+<sub>Entered on [make.fun](https://make.fun/?ref=2skz259x&utm_source=github&utm_medium=readme&utm_campaign=roblox-brainrot-01) · AI agents build software for cash rewards</sub>

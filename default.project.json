@@ -1,62 +1,281 @@
 {
-  "name": "house-dodge",
+  "name": "rot-ranch",
   "tree": {
     "$className": "DataModel",
     "Players": {
       "$properties": {
-        "CharacterAutoLoads": false
+        "CharacterAutoLoads": true,
+        "RespawnTime": 3
       }
     },
+    "ReplicatedFirst": {
+      "RanchClient": {
+        "$path": "src/client/RanchClient.client.luau"
+      }
+    },
+    "ReplicatedStorage": {
+      "Cast": { "$path": "src/shared/Cast.luau" },
+      "Controls": { "$path": "src/shared/Controls.luau" },
+      "RanchAction": { "$className": "RemoteEvent" },
+      "RanchToast": { "$className": "RemoteEvent" }
+    },
     "ServerScriptService": {
-      "Server": {
-        "$path": "src/server"
+      "Ranch": { "$path": "src/server/Ranch.server.luau" }
+    },
+    "ServerStorage": {
+      "CattleDrive": { "$path": "src/ranch/CattleDrive.luau" },
+      "Income": { "$path": "src/ranch/Income.luau" },
+      "Ledger": { "$path": "src/ranch/Ledger.luau" },
+      "Pens": { "$path": "src/ranch/Pens.luau" },
+      "Rebirth": { "$path": "src/ranch/Rebirth.luau" },
+      "Rustling": { "$path": "src/ranch/Rustling.luau" },
+      "Stampede": { "$path": "src/ranch/Stampede.luau" },
+      "Workshop": {
+        "$className": "Folder",
+        "Critters": { "$path": "src/workshop/Critters.luau" },
+        "World": { "$path": "src/workshop/World.luau" }
       }
     },
     "StarterPlayer": {
       "StarterPlayerScripts": {
-        "Client": {
-          "$path": "src/client"
-        }
+        "Hud": { "$path": "src/client/Hud.luau" }
       }
     },
     "Workspace": {
       "$properties": {
-        "FilteringEnabled": true
+        "FilteringEnabled": true,
+        "Gravity": 196.2
       },
-      "Baseplate": {
+      "Prairie": {
         "$className": "Part",
         "$properties": {
-          "Anchored": true,
-          "Color": [
-            0.38823,
-            0.37254,
-            0.38823
-          ],
-          "Locked": true,
-          "Position": [
-            0,
-            -10,
-            0
-          ],
-          "Size": [
-            512,
-            20,
-            512
-          ]
+          "Anchored": true, "Locked": true, "Material": "Grass",
+          "Color": [0.47, 0.6, 0.27],
+          "Size": [460, 2, 460], "CFrame": { "CFrame": { "position": [0, -1, 0], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } }
+        }
+      },
+      "CattleDriveTrail": {
+        "$className": "Part",
+        "$properties": {
+          "Anchored": true, "Locked": true, "Material": "Ground",
+          "Color": [0.62, 0.46, 0.29],
+          "Size": [270, 0.4, 16], "CFrame": { "CFrame": { "position": [0, 0.2, 0], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } }
+        }
+      },
+      "DriveShoulder": {
+        "$className": "Part",
+        "$properties": {
+          "Anchored": true, "Locked": true, "Material": "Sand",
+          "Color": [0.78, 0.66, 0.45],
+          "Size": [270, 0.3, 40], "CFrame": { "CFrame": { "position": [0, 0.1, 0], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } }
+        }
+      },
+      "RedBarn": {
+        "$className": "Model",
+        "BarnWalls": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true, "Material": "WoodPlanks",
+            "Color": [0.66, 0.14, 0.11],
+            "Size": [44, 16, 30], "CFrame": { "CFrame": { "position": [0, 8, -104], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } }
+          }
+        },
+        "RoofWest": {
+          "$className": "WedgePart",
+          "$properties": {
+            "Anchored": true, "Material": "Slate",
+            "Color": [0.27, 0.22, 0.2],
+            "Size": [32, 11, 23],
+            "CFrame": { "CFrame": { "position": [-11.5, 21.5, -104], "orientation": [[0, 0, 1], [0, 1, 0], [-1, 0, 0]] } }
+          }
+        },
+        "RoofEast": {
+          "$className": "WedgePart",
+          "$properties": {
+            "Anchored": true, "Material": "Slate",
+            "Color": [0.27, 0.22, 0.2],
+            "Size": [32, 11, 23],
+            "CFrame": { "CFrame": { "position": [11.5, 21.5, -104], "orientation": [[0, 0, -1], [0, 1, 0], [1, 0, 0]] } }
+          }
+        },
+        "BarnDoor": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true, "Material": "WoodPlanks",
+            "Color": [0.42, 0.26, 0.14],
+            "Size": [16, 12, 0.6], "CFrame": { "CFrame": { "position": [0, 6, -88.8], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } }
+          }
+        },
+        "DoorTrimTop": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true, "Material": "SmoothPlastic",
+            "Color": [0.96, 0.94, 0.88],
+            "Size": [17, 1, 0.8], "CFrame": { "CFrame": { "position": [0, 12.3, -88.7], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } }
+          }
+        },
+        "DoorTrimLeft": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true, "Material": "SmoothPlastic",
+            "Color": [0.96, 0.94, 0.88],
+            "Size": [1, 12, 0.8], "CFrame": { "CFrame": { "position": [-8.5, 6, -88.7], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } }
+          }
+        },
+        "DoorTrimRight": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true, "Material": "SmoothPlastic",
+            "Color": [0.96, 0.94, 0.88],
+            "Size": [1, 12, 0.8], "CFrame": { "CFrame": { "position": [8.5, 6, -88.7], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } }
+          }
+        },
+        "CornerTrimWest": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true, "Material": "SmoothPlastic",
+            "Color": [0.96, 0.94, 0.88],
+            "Size": [1.2, 16, 1.2], "CFrame": { "CFrame": { "position": [-22, 8, -89], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } }
+          }
+        },
+        "CornerTrimEast": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true, "Material": "SmoothPlastic",
+            "Color": [0.96, 0.94, 0.88],
+            "Size": [1.2, 16, 1.2], "CFrame": { "CFrame": { "position": [22, 8, -89], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } }
+          }
+        },
+        "HayloftDoor": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true, "Material": "WoodPlanks",
+            "Color": [0.42, 0.26, 0.14],
+            "Size": [6, 5, 0.6], "CFrame": { "CFrame": { "position": [0, 21, -88.6], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } }
+          }
+        },
+        "RanchSign": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true, "Material": "Wood",
+            "Color": [0.85, 0.7, 0.42],
+            "Size": [26, 5, 0.6], "CFrame": { "CFrame": { "position": [0, 14.6, -88.2], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } }
+          }
+        }
+      },
+      "Silo": {
+        "$className": "Model",
+        "SiloTower": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true, "Material": "DiamondPlate", "Shape": "Cylinder",
+            "Color": [0.72, 0.74, 0.76],
+            "Size": [30, 12, 12],
+            "CFrame": { "CFrame": { "position": [32, 15, -106], "orientation": [[0, -1, 0], [1, 0, 0], [0, 0, 1]] } }
+          }
+        },
+        "SiloDome": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true, "Material": "Metal", "Shape": "Ball",
+            "Color": [0.55, 0.58, 0.6],
+            "Size": [12, 12, 12], "CFrame": { "CFrame": { "position": [32, 30, -106], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } }
+          }
+        },
+        "SiloBand": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true, "Material": "SmoothPlastic", "Shape": "Cylinder",
+            "Color": [0.66, 0.14, 0.11],
+            "Size": [2, 12.4, 12.4],
+            "CFrame": { "CFrame": { "position": [32, 24, -106], "orientation": [[0, -1, 0], [1, 0, 0], [0, 0, 1]] } }
+          }
+        }
+      },
+      "WaterTower": {
+        "$className": "Model",
+        "Tank": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true, "Material": "WoodPlanks", "Shape": "Cylinder",
+            "Color": [0.5, 0.33, 0.2],
+            "Size": [9, 12, 12],
+            "CFrame": { "CFrame": { "position": [-46, 20, 104], "orientation": [[0, -1, 0], [1, 0, 0], [0, 0, 1]] } }
+          }
+        },
+        "TankCap": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true, "Material": "Slate", "Shape": "Ball",
+            "Color": [0.3, 0.26, 0.24],
+            "Size": [12, 12, 12], "CFrame": { "CFrame": { "position": [-46, 24, 104], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } }
+          }
+        },
+        "LegNW": { "$className": "Part", "$properties": { "Anchored": true, "Material": "Wood", "Color": [0.4, 0.27, 0.16], "Size": [1, 16, 1], "CFrame": { "CFrame": { "position": [-50, 8, 100], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } } } },
+        "LegNE": { "$className": "Part", "$properties": { "Anchored": true, "Material": "Wood", "Color": [0.4, 0.27, 0.16], "Size": [1, 16, 1], "CFrame": { "CFrame": { "position": [-42, 8, 100], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } } } },
+        "LegSW": { "$className": "Part", "$properties": { "Anchored": true, "Material": "Wood", "Color": [0.4, 0.27, 0.16], "Size": [1, 16, 1], "CFrame": { "CFrame": { "position": [-50, 8, 108], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } } } },
+        "LegSE": { "$className": "Part", "$properties": { "Anchored": true, "Material": "Wood", "Color": [0.4, 0.27, 0.16], "Size": [1, 16, 1], "CFrame": { "CFrame": { "position": [-42, 8, 108], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } } } }
+      },
+      "RotCorral": {
+        "$className": "Model",
+        "ChutePostNorth": { "$className": "Part", "$properties": { "Anchored": true, "Material": "Wood", "Color": [0.36, 0.24, 0.14], "Size": [1.6, 16, 1.6], "CFrame": { "CFrame": { "position": [-132, 8, -10], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } } } },
+        "ChutePostSouth": { "$className": "Part", "$properties": { "Anchored": true, "Material": "Wood", "Color": [0.36, 0.24, 0.14], "Size": [1.6, 16, 1.6], "CFrame": { "CFrame": { "position": [-132, 8, 10], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } } } },
+        "ChuteBeam": { "$className": "Part", "$properties": { "Anchored": true, "Material": "Wood", "Color": [0.36, 0.24, 0.14], "Size": [1.6, 1.6, 22], "CFrame": { "CFrame": { "position": [-132, 15.6, 0], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } } } },
+        "ChuteSign": { "$className": "Part", "$properties": { "Anchored": true, "Material": "Wood", "Color": [0.45, 0.62, 0.2], "Size": [0.6, 4, 18], "CFrame": { "CFrame": { "position": [-131.6, 12.6, 0], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } } } },
+        "SlimeVat": { "$className": "Part", "$properties": { "Anchored": true, "Material": "Neon", "Shape": "Cylinder", "Color": [0.45, 0.85, 0.2], "Size": [3, 14, 14], "CFrame": { "CFrame": { "position": [-146, 1.5, 0], "orientation": [[0, -1, 0], [1, 0, 0], [0, 0, 1]] } } } }
+      },
+      "DustCanyon": {
+        "$className": "Model",
+        "MesaNorth": { "$className": "Part", "$properties": { "Anchored": true, "Material": "Sandstone", "Color": [0.76, 0.48, 0.3], "Size": [40, 34, 70], "CFrame": { "CFrame": { "position": [158, 17, -50], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } } } },
+        "MesaSouth": { "$className": "Part", "$properties": { "Anchored": true, "Material": "Sandstone", "Color": [0.72, 0.44, 0.27], "Size": [40, 28, 70], "CFrame": { "CFrame": { "position": [158, 14, 50], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } } } },
+        "ButteNorth": { "$className": "Part", "$properties": { "Anchored": true, "Material": "Sandstone", "Color": [0.8, 0.52, 0.33], "Size": [22, 46, 26], "CFrame": { "CFrame": { "position": [170, 23, -16], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } } } },
+        "ButteSouth": { "$className": "Part", "$properties": { "Anchored": true, "Material": "Sandstone", "Color": [0.68, 0.42, 0.26], "Size": [22, 40, 24], "CFrame": { "CFrame": { "position": [170, 20, 18], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } } } }
+      },
+      "RanchSpawn": {
+        "$className": "SpawnLocation",
+        "$properties": {
+          "Anchored": true, "Neutral": true, "CanCollide": false, "Transparency": 1, "Duration": 0,
+          "Size": [6, 1, 6], "CFrame": { "CFrame": { "position": [0, 0.5, -48], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } }
         }
       }
     },
     "Lighting": {
       "$properties": {
-        "Ambient": [
-          0,
-          0,
-          0
-        ],
-        "Brightness": 2,
+        "Ambient": [0.36, 0.3, 0.26],
+        "OutdoorAmbient": [0.62, 0.52, 0.42],
+        "Brightness": 2.6,
+        "ClockTime": 16.4,
+        "GeographicLatitude": 30,
+        "ColorShift_Top": [1, 0.86, 0.66],
+        "EnvironmentDiffuseScale": 0.5,
+        "EnvironmentSpecularScale": 0.4,
         "GlobalShadows": true,
         "Outlines": false,
-        "Technology": "Voxel"
+        "Technology": "Future"
+      },
+      "PrairieHaze": {
+        "$className": "Atmosphere",
+        "$properties": {
+          "Density": 0.28,
+          "Offset": 0.1,
+          "Color": [0.96, 0.82, 0.62],
+          "Decay": [0.86, 0.56, 0.36],
+          "Glare": 0.3,
+          "Haze": 1.4
+        }
+      },
+      "GoldenHour": {
+        "$className": "ColorCorrectionEffect",
+        "$properties": {
+          "Brightness": 0.03,
+          "Contrast": 0.08,
+          "Saturation": 0.18,
+          "TintColor": [1, 0.96, 0.9]
+        }
+      },
+      "SunGlow": {
+        "$className": "BloomEffect",
+        "$properties": { "Intensity": 0.35, "Size": 24, "Threshold": 1.4 }
       }
     },
     "SoundService": {

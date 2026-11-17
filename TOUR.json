@@ -1,1 +1,6 @@
-{"tour": 1, "steps": [{"screenshot": "1-start.png"}, {"screenshot": "2-play.png", "keys": ["Right"], "wait_ms": 1000}, {"screenshot": "3-end.png", "keys": ["Down"], "wait_ms": 1000}]}
+{"tour": 1, "steps": [
+  {"screenshot": "1-cover.jpg", "wait_ms": 2000},
+  {"screenshot": "2-lasso.jpg", "keys": ["S", "E"], "wait_ms": 1500},
+  {"screenshot": "3-pens.jpg", "keys": ["W"], "wait_ms": 3000},
+  {"screenshot": "4-stampede.jpg", "wait_ms": 3000, "call": {"module": "ServerStorage.Stampede", "fn": "startStampede", "arg": 1, "on": "Server"}}
+]}
