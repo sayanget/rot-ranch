@@ -197,7 +197,8 @@ function addRustlePrompt(record: Ledger.CritterRecord)
 	end)
 end
 
--- Builds a critter record already standing in an account's stall (rival herds, showcase stocking).
+-- Builds a critter record already standing in an account's stall (rival herds, Showcase stocking):
+-- no lasso flight, but a player's stocked critter still lands in their RanchDex.
 function Pens.stockCritter(account: Ledger.Account, id: string, mutation: string?, stall: number?): Ledger.CritterRecord?
 	local slot = stall or Pens.freeStallOf(account)
 	if not slot or not account.plot then

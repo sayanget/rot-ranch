@@ -77,7 +77,7 @@ function CattleDrive.lassoCritter(player: Player, entry: DriveEntry)
 		Ledger.deed(account, { kind = "discover", id = record.id, mutation = record.mutation })
 	end
 
-	-- The rope: hand to loop, up for the whole flight.
+	-- The rope runs from the rancher's hand to the loop and stays up for the whole flight.
 	local hand = handOf(player)
 	local cleanup = if hand then Critters.throwLasso(hand, record.model) else nil
 	record.model:SetAttribute("Gait", "fly")

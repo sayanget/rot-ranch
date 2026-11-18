@@ -38,7 +38,8 @@ function Guide.recordDeed(account: Ledger.Account, deed: Ledger.Deed)
 	end
 end
 
--- "home" has no deed: it is done when you stand in your own ranch with a critter in a stall.
+-- "home" has no deed: it ticks off once you stand inside your own ranch with at least one critter
+-- in a stall, checked twice a second.
 local function checkHome()
 	for _, account in Ledger.players() do
 		if Guide.STEPS[account.guideStep] == "home" and account.plot and Ledger.herdSize(account) > 0 then

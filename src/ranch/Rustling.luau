@@ -287,9 +287,10 @@ function Rustling.sendRustlerRaid(target: Player?)
 	local victim = best :: Ledger.CritterRecord
 	rideTo(root, gate, Rustling.RUSTLER_SPEED).Completed:Wait()
 	rideTo(root, (victim.model.PrimaryPart :: BasePart).Position, Rustling.RUSTLER_SPEED).Completed:Wait()
+	-- The critter left its stall while the rustler rode in (rustled first, or a rebirth cleared the pens).
 	if victim.owner ~= account or account.stalls[victim.stall or 0] ~= victim then
 		rideTo(root, Vector3.new(edgeX, 0, 0), Rustling.RUSTLER_SPEED).Completed:Wait()
-		finish("The rustler came up empty.", GREEN)
+		finish("The rustler came up empty-handed and rode off.", GREEN)
 		return
 	end
 	Pens.takeCritterFromPen(victim)

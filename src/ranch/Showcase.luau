@@ -100,7 +100,7 @@ function Showcase.run(command: string, arg: any?): boolean
 	return true
 end
 
--- One screen per call, for TOUR.json: "cover", "lasso", "herd" or an event name.
+-- One screen per call, for TOUR.json: "cover", "lasso", "herd", "raid" or an event name.
 function Showcase.stage(name: string)
 	local _, account = firstAccount()
 	if account and (name == "cover" or name == "herd") then

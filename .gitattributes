@@ -1,0 +1,4 @@
+* text=auto eol=lf
+*.rbxl -text
+*.jpg -text
+*.png -text
