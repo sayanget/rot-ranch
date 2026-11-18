@@ -1,0 +1,4 @@
+# Local hand-in runs (MAKEFUN_OUTPUT_DIR=out node main.ts) and Studio's lock file for an open place.
+out/
+out2/
+*.rbxl.lock

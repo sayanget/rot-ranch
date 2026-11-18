@@ -1,78 +1,84 @@
--- Stampede: the ranch's hazard. Every couple of minutes the dust rises over Dust Canyon, a ten-second
--- countdown goes up ("STAMPEDE IN 8 - GET OFF THE DRIVE!") and a herd of glowing-eyed rot bulls
--- thunders down the whole drive. Anyone caught out in the open is flung, drops what they carry and
--- loses some cash; critters still on the drive are flattened. Behind a fence you are safe.
+-- Stampede: the ranch's first hazard. When the calendar calls it, the dust rises over Dust Canyon,
+-- the sky browns, a ten-second countdown goes up ("STAMPEDE IN 8 - GET OFF THE DRIVE!") with a siren,
+-- and a herd of glowing-eyed rot bulls thunders down the whole drive. Anyone caught out in the open is
+-- flung, drops what they carry and loses a cut of their cash; critters still on the drive are
+-- flattened. Behind a fence you are safe.
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
+local Cast = require(ReplicatedStorage:WaitForChild("Cast"))
 local CattleDrive = require(script.Parent:WaitForChild("CattleDrive"))
-local Critters = require(script.Parent:WaitForChild("Workshop"):WaitForChild("Critters"))
+local Critters = require(ReplicatedStorage:WaitForChild("Critters"))
+local Events = require(script.Parent:WaitForChild("Events"))
 local Ledger = require(script.Parent:WaitForChild("Ledger"))
 local Rustling = require(script.Parent:WaitForChild("Rustling"))
+local Mood = require(script.Parent:WaitForChild("Workshop"):WaitForChild("Mood"))
 local World = require(script.Parent:WaitForChild("Workshop"):WaitForChild("World"))
 
 local Stampede = {}
 
-Stampede.EVERY = 110
 Stampede.WARNING = 10
-Stampede.HERD_SPEED = 36
-Stampede.CASH_LOST = 0.15
-Stampede.running = false
+Stampede.HERD_SPEED = 38
 
 local HERD_ROWS = { -14, -6, 2, 10, 16 }
 local HERD_DEPTH = 34
 local dustCloud: (Vector3, Vector3) -> (Part, ParticleEmitter)
 local chargeHerd: () -> ()
 
--- One full stampede: warning countdown with rising dust, the charge, then the all-clear.
+-- One full stampede: warning countdown with rising dust and a siren, the charge, then the all-clear.
 function Stampede.startStampede(_arg: any?)
-	if Stampede.running then
-		return
-	end
-	Stampede.running = true
 	local now = Workspace:GetServerTimeNow()
-	Workspace:SetAttribute("StampedeAt", now + Stampede.WARNING)
-	Workspace:SetAttribute("StampedePhase", "warning")
+	Events.setPhase("stampede", "warning", now + Stampede.WARNING)
+	Mood.set("stampede", Stampede.WARNING)
 	Ledger.toastAll("The ground is shaking... STAMPEDE INCOMING! Get off the drive!", Color3.fromRGB(255, 170, 60))
+	Ledger.cueAll("stampedeWarn", Stampede.WARNING)
 	local cloud, dust = dustCloud(Vector3.new(150, 6, 0), Vector3.new(20, 4, 40))
 	for i = 1, Stampede.WARNING * 4 do
 		dust:Emit(4 + i)
 		task.wait(0.25)
 	end
 	Workspace:SetAttribute("StampedeFront", World.DRIVE_END_X + 40)
-	Workspace:SetAttribute("StampedePhase", "charging")
+	Events.setPhase("stampede", "active", 0)
+	Ledger.cueAll("stampede")
 	CattleDrive.paused = true
 	chargeHerd()
 	cloud:Destroy()
 	CattleDrive.paused = false
-	Workspace:SetAttribute("StampedePhase", "calm")
-	Workspace:SetAttribute("StampedeAt", Workspace:GetServerTimeNow() + Stampede.EVERY)
+	Mood.set("normal", 4)
+	Ledger.cueAll("allClear")
 	Ledger.toastAll("The dust settles. The drive is open again.", Color3.fromRGB(200, 255, 170))
-	Stampede.running = false
 end
 
--- Flings a rancher caught on the drive: they drop what they carry and lose a cut of their cash.
-function Stampede.trampleRancher(player: Player)
+-- Flings a rancher caught in a hazard: they drop what they carry and lose a cut of their cash.
+-- Returns the cash knocked loose (the Dust Devil scatters it as coins).
+function Stampede.trampleRancher(player: Player, cut: number?, how: string?): number
 	local account = Ledger.accountOf(player)
 	if not account then
-		return
+		return 0
 	end
 	local now = Workspace:GetServerTimeNow()
 	if account.trampledUntil > now then
-		return
+		return 0
 	end
 	account.trampledUntil = now + 4
 	if account.carrying then
 		Rustling.returnCarried(account, account.carrying)
 	end
-	local lost = math.floor(account.cash * Stampede.CASH_LOST)
+	local lost = math.floor(account.cash * (cut or Cast.STAMPEDE_CASH_LOST))
 	account.cash -= lost
 	Ledger.syncRancher(account)
 	player:SetAttribute("TrampledAt", now)
-	Ledger.toast(account, "TRAMPLED! The herd knocked " .. string.format("$%d", lost) .. " out of your pockets.", Color3.fromRGB(255, 90, 80))
+	player:SetAttribute("TrampledBy", how or "stampede")
+	Ledger.cue(account, "trampled")
+	if how == "twister" then
+		Ledger.toast(account, "SWEPT UP! The Dust Devil shook " .. Cast.formatCash(lost) .. " out of your pockets. Grab it back!", Color3.fromRGB(210, 150, 255))
+	else
+		Ledger.toast(account, "TRAMPLED! The herd knocked " .. Cast.formatCash(lost) .. " out of your pockets.", Color3.fromRGB(255, 90, 80))
+	end
+	return lost
 end
-
 
 function dustCloud(at: Vector3, size: Vector3): (Part, ParticleEmitter)
 	local p = Instance.new("Part")
@@ -145,18 +151,6 @@ function chargeHerd()
 	end
 end
 
-function Stampede.startStampedeClock()
-	Workspace:SetAttribute("StampedePhase", "calm")
-	Workspace:SetAttribute("StampedeAt", Workspace:GetServerTimeNow() + Stampede.EVERY)
-	task.spawn(function()
-		while true do
-			task.wait(1)
-			local at = Workspace:GetAttribute("StampedeAt") :: number
-			if not Stampede.running and Workspace:GetAttribute("StampedePhase") == "calm" and Workspace:GetServerTimeNow() >= at - Stampede.WARNING then
-				task.spawn(Stampede.startStampede)
-			end
-		end
-	end)
-end
+Events.register("stampede", Stampede.startStampede)
 
 return Stampede

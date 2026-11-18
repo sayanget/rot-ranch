@@ -1,17 +1,27 @@
--- Ranch: boots Rot Ranch on the server. Builds the world, opens the rival ranches, starts the Cattle
--- Drive, the payday clock, the rustling watch and the stampede clock, and wires each player in.
+-- Ranch: boots Rot Ranch on the server. Lights the sky, builds the world, opens the rival ranches,
+-- starts the Cattle Drive, the payday clock, the rustling watch, the event calendar (stampede,
+-- Golden Hour, Dust Devil), the contract board and the guide, and wires each player in.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
 local CattleDrive = require(ServerStorage:WaitForChild("CattleDrive"))
+local Contracts = require(ServerStorage:WaitForChild("Contracts"))
+local DustDevil = require(ServerStorage:WaitForChild("DustDevil"))
+local Events = require(ServerStorage:WaitForChild("Events"))
+local Guide = require(ServerStorage:WaitForChild("Guide"))
 local Income = require(ServerStorage:WaitForChild("Income"))
 local Ledger = require(ServerStorage:WaitForChild("Ledger"))
 local Pens = require(ServerStorage:WaitForChild("Pens"))
 local Rebirth = require(ServerStorage:WaitForChild("Rebirth"))
 local Rustling = require(ServerStorage:WaitForChild("Rustling"))
-local Stampede = require(ServerStorage:WaitForChild("Stampede"))
-local World = require(ServerStorage:WaitForChild("Workshop"):WaitForChild("World"))
+local Showcase = require(ServerStorage:WaitForChild("Showcase"))
+local Workshop = ServerStorage:WaitForChild("Workshop")
+local Mood = require(Workshop:WaitForChild("Mood"))
+local World = require(Workshop:WaitForChild("World"))
+-- The event modules register themselves with the calendar when required.
+require(ServerStorage:WaitForChild("Stampede"))
+require(ServerStorage:WaitForChild("GoldenHour"))
 
 local action = ReplicatedStorage:WaitForChild("RanchAction") :: RemoteEvent
 local lastAction: { [Player]: number } = {}
@@ -21,19 +31,23 @@ local function welcomeRancher(player: Player)
 	if not Pens.claimRanch(account) then
 		Ledger.toast(account, "Every ranch is taken - you can still rustle!", Color3.fromRGB(255, 160, 80))
 	end
+	Contracts.dealBoard(account)
 	player.CharacterAdded:Connect(function(character)
 		Pens.sendRancherHome(player, character)
 	end)
 	if player.Character then
 		task.spawn(Pens.sendRancherHome, player, player.Character)
 	end
-	Ledger.toast(account, "Welcome to ROT RANCH! Lasso critters off the Cattle Drive (hold E).", Color3.fromRGB(255, 240, 160))
+	Ledger.toast(account, "Howdy, " .. player.DisplayName .. "! Welcome to ROT RANCH.", Color3.fromRGB(255, 240, 160))
+	Ledger.cue(account, "welcome")
+	Ledger.toastAll(player.DisplayName .. " rode into town.", Color3.fromRGB(255, 220, 170))
 end
 
 local function farewellRancher(player: Player)
 	local account = Ledger.accountOf(player)
 	if account then
 		Pens.releaseRanch(account)
+		Contracts.forget(account)
 		Ledger.closeAccount(account)
 	end
 	lastAction[player] = nil
@@ -57,42 +71,14 @@ action.OnServerEvent:Connect(function(player, kind)
 	end
 end)
 
--- Showcase: a server-only BindableFunction a Studio play-test (or a reviewer) invokes to reach each
--- screen quickly: "herd" stocks the first player's ranch, "cash" pays them, "stampede", "raid".
-local SHOWCASE_HERD = {
-	{ "udderlord" }, { "tractortoise", "Golden" }, { "llamplighter" }, { "scarecrowbar" }, { "toastallion", "Moldy" },
-	{ "duckwaffle" }, { "goatcho" }, { "hamwich", "Golden" }, { "baagel" }, { "rotfather" },
-}
-local showcase = Instance.new("BindableFunction")
-showcase.Name = "RanchShowcase"
-showcase.OnInvoke = function(command: string, arg: any)
-	local player = Players:GetPlayers()[1]
-	local account = player and Ledger.accountOf(player)
-	if command == "stampede" then
-		task.spawn(Stampede.startStampede)
-	elseif command == "raid" and player then
-		task.spawn(Rustling.sendRustlerRaid, player)
-	elseif account and command == "rebirths" then
-		account.rebirths = tonumber(arg) or 0
-		Pens.paintRanch(account)
-		Ledger.syncRancher(account)
-	elseif account and command == "cash" then
-		Ledger.addCash(account, tonumber(arg) or 1000)
-	elseif account and command == "herd" then
-		for i = 1, math.min(tonumber(arg) or #SHOWCASE_HERD, #SHOWCASE_HERD) do
-			Pens.stockCritter(account, SHOWCASE_HERD[i][1], SHOWCASE_HERD[i][2])
-		end
-	elseif account and command == "lock" then
-		account.lockedUntil = workspace:GetServerTimeNow() + (tonumber(arg) or 40)
-		Ledger.syncRancher(account)
-	end
-	return true
-end
-showcase.Parent = ServerStorage
-
+Mood.lightTheRanch()
 Pens.setup(World.buildRanchPlots())
 World.decorateRanchland()
+World.startRanchlandMotion()
 Pens.openRivalRanches()
+Showcase.bind()
+Contracts.startContractBoard()
+Guide.startGuide()
 Players.PlayerAdded:Connect(welcomeRancher)
 Players.PlayerRemoving:Connect(farewellRancher)
 for _, player in Players:GetPlayers() do
@@ -101,4 +87,5 @@ end
 CattleDrive.startCattleDrive()
 Income.startIncomeClock()
 Rustling.startRustlingWatch()
-Stampede.startStampedeClock()
+DustDevil.startCoinSpinner()
+Events.startEventClock()

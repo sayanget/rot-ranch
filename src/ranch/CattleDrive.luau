@@ -1,21 +1,25 @@
 -- CattleDrive: the conveyor of the ranch. Critters trot out of the Rot Corral in two lanes, down the
--- dirt drive past every ranch gate, and into Dust Canyon. Each wears its price; hold E to lasso it
--- and it flies into a free stall of yours. A stampede tramples whatever is still on the drive.
+-- dirt drive past every ranch gate, and into Dust Canyon. Each wears its price; hold E to lasso it:
+-- a rope flies from your hand to a loop round its middle and it sails over the fence into a free
+-- stall of yours. Luck (rebirths, horseshoes) and Golden Hour tilt what trots out; a stampede
+-- tramples whatever is still on the drive.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
 local Cast = require(ReplicatedStorage:WaitForChild("Cast"))
-local Critters = require(script.Parent:WaitForChild("Workshop"):WaitForChild("Critters"))
+local Critters = require(ReplicatedStorage:WaitForChild("Critters"))
+local Events = require(script.Parent:WaitForChild("Events"))
 local Ledger = require(script.Parent:WaitForChild("Ledger"))
 local Pens = require(script.Parent:WaitForChild("Pens"))
 local World = require(script.Parent:WaitForChild("Workshop"):WaitForChild("World"))
 
 local CattleDrive = {}
 
-CattleDrive.SPAWN_EVERY = 2.4
+CattleDrive.SPAWN_EVERY = 2.2
 CattleDrive.TROT_SPEED = 6.5
 CattleDrive.LANES = { -3.6, 3.6 }
 CattleDrive.paused = false
+CattleDrive.lassoFlight = 1 -- seconds the lassoed critter spends in the air (the Showcase slows it)
 
 type DriveEntry = { record: Ledger.CritterRecord, price: number, tween: Tween?, sold: boolean }
 
@@ -25,9 +29,9 @@ local folder: Folder
 local laneTurn = 0
 local luckOfRanchers: () -> number
 local leaveDrive: (DriveEntry) -> ()
+local handOf: (Player) -> BasePart?
 
-
--- Lasso: pay the price, the critter leaves the drive and flies to your first free stall.
+-- Lasso: pay the price, the rope flies, and the critter sails to your first free stall.
 function CattleDrive.lassoCritter(player: Player, entry: DriveEntry)
 	local account = Ledger.accountOf(player)
 	if entry.sold or not account or not account.plot then
@@ -36,11 +40,13 @@ function CattleDrive.lassoCritter(player: Player, entry: DriveEntry)
 	local critter = Cast.critterById(entry.record.id)
 	local stall = Pens.freeStallOf(account)
 	if not stall then
-		Ledger.toast(account, "Your pens are full! Rebirth for more stalls.", Color3.fromRGB(255, 160, 80))
+		Ledger.toast(account, "Your pens are full! Rebirth (R) for more stalls.", Color3.fromRGB(255, 160, 80))
+		Ledger.cue(account, "deny")
 		return
 	end
 	if not Ledger.spendCash(account, entry.price) then
 		Ledger.toast(account, "Need " .. Cast.formatCash(entry.price) .. " to lasso " .. critter.name, Color3.fromRGB(255, 120, 100))
+		Ledger.cue(account, "deny")
 		return
 	end
 	entry.sold = true
@@ -52,18 +58,51 @@ function CattleDrive.lassoCritter(player: Player, entry: DriveEntry)
 	if prompt then
 		prompt:Destroy()
 	end
-	local rate = Cast.formatCash(Cast.incomeOf(entry.record.id, entry.record.mutation, account.rebirths))
-	Ledger.toast(account, "YEEHAW! Lassoed " .. critter.name .. "  +" .. rate .. "/s", Cast.rarityColor(critter.rarity))
-	if Cast.RARITIES[critter.rarity].rank >= 5 then
-		Ledger.toastAll(account.name .. " lassoed a " .. string.upper(Cast.rarityLabel(critter.rarity)) .. " " .. critter.name .. "!", Cast.rarityColor(critter.rarity))
+	local record = entry.record
+	local rate = Cast.formatCash(Cast.incomeOf(record.id, record.mutation, account.rebirths))
+	local firstFind = Ledger.discover(account, record.id, record.mutation)
+	local mutationText = if record.mutation then string.upper(record.mutation) .. " " else ""
+	Ledger.toast(account, "YEEHAW! Lassoed " .. mutationText .. critter.name .. "  +" .. rate .. "/s", Cast.mutationTint(record.mutation) or Cast.rarityColor(critter.rarity))
+	if firstFind then
+		Ledger.toast(account, "NEW in your RanchDex: " .. mutationText .. critter.name .. "! (B)", Color3.fromRGB(255, 236, 150))
 	end
-	Pens.placeCritterInPen(account, entry.record, stall, true)
+	Ledger.cue(account, "lasso", { rank = Cast.rankOf(record.id), mutation = record.mutation, fresh = firstFind })
+	if Cast.RARITIES[critter.rarity].rank >= 5 or (record.mutation and Cast.mutationMult(record.mutation) >= 6) then
+		Ledger.toastAll(account.name .. " lassoed a " .. string.upper(mutationText .. Cast.rarityLabel(critter.rarity)) .. " " .. critter.name .. "!", Cast.rarityColor(critter.rarity))
+	end
+	Ledger.syncBoard(account)
+	Ledger.deed(account, { kind = "lasso", id = record.id, mutation = record.mutation, amount = entry.price })
+	if firstFind then
+		Ledger.deed(account, { kind = "discover", id = record.id, mutation = record.mutation })
+	end
+
+	-- The rope: hand to loop, up for the whole flight.
+	local hand = handOf(player)
+	local cleanup = if hand then Critters.throwLasso(hand, record.model) else nil
+	record.model:SetAttribute("Gait", "fly")
+	if record.mutation then
+		Critters.sparkle((record.model.PrimaryPart :: BasePart).Position + Vector3.new(0, 4, 0), Cast.mutationTint(record.mutation) :: Color3, 40)
+	end
+	Pens.placeCritterInPen(account, record, stall, true, CattleDrive.lassoFlight)
+	if cleanup then
+		cleanup()
+	end
+	Ledger.cue(account, "land", Cast.rankOf(record.id))
 end
 
+function handOf(player: Player): BasePart?
+	local character = player.Character
+	if not character then
+		return nil
+	end
+	return (character:FindFirstChild("RightHand") or character:FindFirstChild("Right Arm") or character:FindFirstChild("HumanoidRootPart")) :: BasePart?
+end
+
+-- The luckiest rancher on the server sets the drive's luck: rebirths plus any horseshoe charm.
 function luckOfRanchers(): number
 	local best = 0
 	for _, account in Ledger.players() do
-		best = math.max(best, account.rebirths)
+		best = math.max(best, Ledger.luckOf(account))
 	end
 	return best
 end
@@ -77,7 +116,7 @@ end
 
 -- Sends one rolled critter trotting down the drive with its price tag and Lasso prompt.
 function CattleDrive.spawnDriveCritter(forceId: string?, forceMutation: string?): DriveEntry
-	local critter, mutation = Cast.rollDriveCritter(rng, luckOfRanchers())
+	local critter, mutation = Cast.rollDriveCritter(rng, luckOfRanchers(), Events.goldenBoost)
 	if forceId then
 		critter, mutation = Cast.critterById(forceId), forceMutation
 	end
@@ -95,7 +134,7 @@ function CattleDrive.spawnDriveCritter(forceId: string?, forceMutation: string?)
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "LassoPrompt"
 	prompt.ActionText = "Lasso " .. Cast.formatCash(price)
-	prompt.ObjectText = critter.name .. " (" .. Cast.rarityLabel(critter.rarity) .. ")"
+	prompt.ObjectText = (if mutation then mutation .. " " else "") .. critter.name .. " (" .. Cast.rarityLabel(critter.rarity) .. ")"
 	prompt.HoldDuration = 0.3
 	prompt.MaxActivationDistance = 13
 	prompt.RequiresLineOfSight = false
@@ -108,6 +147,9 @@ function CattleDrive.spawnDriveCritter(forceId: string?, forceMutation: string?)
 
 	model.Parent = folder
 	Critters.poof(start + Vector3.new(0, 2, 0), Color3.fromRGB(140, 230, 90), 14)
+	if mutation or Cast.RARITIES[critter.rarity].rank >= 5 then
+		Ledger.cueAll("rareOnDrive", { rank = Cast.RARITIES[critter.rarity].rank, mutation = mutation })
+	end
 	local trot = TweenService:Create(model.PrimaryPart :: BasePart, TweenInfo.new((finish - start).Magnitude / CattleDrive.TROT_SPEED, Enum.EasingStyle.Linear), {
 		CFrame = CFrame.lookAt(finish, finish + (finish - start).Unit),
 	})
@@ -148,6 +190,21 @@ function CattleDrive.fastForward(entry: DriveEntry, fraction: number)
 	trot:Play()
 end
 
+-- The critter on the drive nearest a point (the Showcase lassoes it for the camera).
+function CattleDrive.nearestOnDrive(position: Vector3): DriveEntry?
+	local best, bestDistance = nil, math.huge
+	for _, entry in onDrive do
+		local root = entry.record.model.PrimaryPart
+		if root and not entry.sold then
+			local d = (root.Position - position).Magnitude
+			if d < bestDistance then
+				best, bestDistance = entry, d
+			end
+		end
+	end
+	return best
+end
+
 -- The stampede flattens every unsold critter between two x positions on the drive.
 function CattleDrive.trampleDriveCritters(fromX: number, toX: number): number
 	local count = 0
@@ -173,7 +230,7 @@ function CattleDrive.startCattleDrive()
 	folder.Name = "CattleDrive"
 	folder.Parent = workspace
 	-- Fill the drive so the first player sees a full line, then keep it coming.
-	local warm = 18
+	local warm = 20
 	for i = 1, warm do
 		local entry = CattleDrive.spawnDriveCritter()
 		CattleDrive.fastForward(entry, (warm - i) / warm * 0.95)

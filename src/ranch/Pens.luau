@@ -1,12 +1,13 @@
 -- Pens: who owns which ranch, which critter stands in which stall. Claims a ranch for each
--- rancher, flies a lassoed critter into a free stall, hangs a Rustle prompt on every penned critter,
--- stocks the three rival ranches, and sends a rancher home when they spawn.
+-- rancher, flies a lassoed critter on its rope into a free stall (where it settles into an idle
+-- sway), hangs a Rustle prompt on every penned critter, stocks the three rival ranches with
+-- mutated herds worth rustling, and sends a rancher home when they spawn.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
 local Cast = require(ReplicatedStorage:WaitForChild("Cast"))
-local Critters = require(script.Parent:WaitForChild("Workshop"):WaitForChild("Critters"))
+local Critters = require(ReplicatedStorage:WaitForChild("Critters"))
 local Ledger = require(script.Parent:WaitForChild("Ledger"))
 local World = require(script.Parent:WaitForChild("Workshop"):WaitForChild("World"))
 
@@ -21,17 +22,20 @@ local addRustlePrompt: (Ledger.CritterRecord) -> ()
 -- Set by Rustling: what a Rustle prompt does when another rancher holds it.
 Pens.rustleHandler = nil :: ((Player, Ledger.CritterRecord) -> ())?
 
+-- The rival ranchers: each herd shows off a different corner of the cast and a mutation or two,
+-- so a walk past the open gates is a preview of what the drive can roll.
 local RIVALS = {
 	{ name = "Dusty Dolores", color = Color3.fromRGB(255, 190, 120), rebirths = 1,
-		herd = { { "toastallion" }, { "baagel", "Moldy" }, { "goatcho" }, { "cluckaroni" }, { "llamplighter" }, { "spudmoo", "Golden" } } },
+		herd = { { "toastallion" }, { "baagel", "Moldy" }, { "jackalope", "Spicy" }, { "cactopus" }, { "llamplighter" }, { "spudmoo", "Golden" } } },
 	{ name = "Clem Two-Spurs", color = Color3.fromRGB(150, 210, 255), rebirths = 2,
-		herd = { { "tractortoise" }, { "duckwaffle" }, { "hamwich", "Golden" }, { "goatcho", "Moldy" }, { "baagel" }, { "toastallion" }, { "cluckaroni" } } },
+		herd = { { "tractortoise" }, { "banjobuzzard" }, { "hamwich", "Golden" }, { "wienerbago", "Crystal" }, { "beanburro" }, { "rattlesnack" }, { "tumbleweasel" } } },
 	{ name = "Granny Gristle", color = Color3.fromRGB(230, 160, 255), rebirths = 0,
-		herd = { { "scarecrowbar" }, { "hamwich" }, { "spudmoo" }, { "cluckaroni", "Moldy" }, { "llamplighter" } } },
+		herd = { { "haybalehydra" }, { "goatcho", "Ghost" }, { "tumbleweasel" }, { "cluckaroni", "Moldy" }, { "duckwaffle" } } },
 }
 
--- Puts a critter in a stall: it flies there on a lasso arc when `fly`, then earns for its owner.
-function Pens.placeCritterInPen(account, record, stall: number, fly: boolean?)
+-- Puts a critter in a stall: it flies there on a lasso arc when `fly` (over `flight` seconds), then
+-- settles into its idle sway and earns for its owner.
+function Pens.placeCritterInPen(account, record, stall: number, fly: boolean?, flight: number?)
 	local plot = account.plot :: World.Plot
 	record.owner = account
 	record.stall = stall
@@ -46,21 +50,23 @@ function Pens.placeCritterInPen(account, record, stall: number, fly: boolean?)
 	root.Anchored = true
 	local target = plot.stallCFrames[stall]
 	if fly then
+		local seconds = flight or 1
 		local from = root.CFrame
-		local apex = CFrame.new(from.Position:Lerp(target.Position, 0.5) + Vector3.new(0, 26, 0)) * target.Rotation
-		local up = TweenService:Create(root, TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { CFrame = apex })
+		local apex = CFrame.new(from.Position:Lerp(target.Position, 0.5) + Vector3.new(0, 26, 0)) * target.Rotation * CFrame.Angles(0.5, 0, 0.3)
+		local up = TweenService:Create(root, TweenInfo.new(seconds * 0.56, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { CFrame = apex })
 		up:Play()
 		up.Completed:Wait()
 		if record.owner ~= account or record.stall ~= stall then
 			return
 		end
-		local down = TweenService:Create(root, TweenInfo.new(0.55, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { CFrame = target })
+		local down = TweenService:Create(root, TweenInfo.new(seconds * 0.44, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { CFrame = target })
 		down:Play()
 		down.Completed:Wait()
 		Critters.poof(target.Position, Color3.fromRGB(230, 200, 140), 16)
 	else
 		root.CFrame = target
 	end
+	model:SetAttribute("Gait", "idle")
 	Critters.labelCritter(model, record.id, record.mutation, account.rebirths, nil)
 	if not model:FindFirstChild("RustlePrompt", true) then
 		addRustlePrompt(record)
@@ -198,6 +204,10 @@ function Pens.stockCritter(account: Ledger.Account, id: string, mutation: string
 	local model = Critters.buildCritter(id, mutation, account.plot.stallCFrames[slot])
 	local record: Ledger.CritterRecord = { id = id, mutation = mutation, model = model, owner = nil, stall = nil, carrier = nil }
 	Pens.placeCritterInPen(account, record, slot, false)
+	if not account.isBot then
+		Ledger.discover(account, id, mutation)
+		Ledger.syncBoard(account)
+	end
 	return record
 end
 

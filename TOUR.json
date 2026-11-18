@@ -1,6 +1,6 @@
 {"tour": 1, "steps": [
-  {"screenshot": "1-cover.jpg", "wait_ms": 2000},
-  {"screenshot": "2-lasso.jpg", "keys": ["S", "E"], "wait_ms": 1500},
-  {"screenshot": "3-pens.jpg", "keys": ["W"], "wait_ms": 3000},
-  {"screenshot": "4-stampede.jpg", "wait_ms": 3000, "call": {"module": "ServerStorage.Stampede", "fn": "startStampede", "arg": 1, "on": "Server"}}
+  {"screenshot": "1-cover.jpg", "wait_ms": 3000, "call": {"module": "ServerStorage.Showcase", "fn": "stage", "arg": "cover", "on": "Server"}},
+  {"screenshot": "2-lasso.jpg", "wait_ms": 1500, "call": {"module": "ServerStorage.Showcase", "fn": "stage", "arg": "lasso", "on": "Server"}},
+  {"screenshot": "3-ranchdex.jpg", "keys": ["B"], "wait_ms": 2000, "call": {"module": "ServerStorage.Showcase", "fn": "stage", "arg": "herd", "on": "Server"}},
+  {"screenshot": "4-dustdevil.jpg", "wait_ms": 3000, "call": {"module": "ServerStorage.Showcase", "fn": "stage", "arg": "dustdevil", "on": "Server"}}
 ]}

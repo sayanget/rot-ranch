@@ -1,14 +1,15 @@
 -- Rustling: the steal-and-lock half of the ranch. Hold E on a critter behind an OPEN gate to rustle
 -- it and carry it home over your head; lock your own gate from inside your ranch (L, the HUD button
 -- or the LOCK pad). Rival ranchers' gates open and shut on a clock, and masked rustlers ride in to
--- raid an open ranch: tag one before it reaches the edge of the map and you get your critter back.
+-- raid an open ranch, whistling as they come: tag one before it reaches the edge of the map and you
+-- get your critter back plus a bounty. Every lock, rustle and tag counts toward the contract board.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
 local Cast = require(ReplicatedStorage:WaitForChild("Cast"))
-local Critters = require(script.Parent:WaitForChild("Workshop"):WaitForChild("Critters"))
+local Critters = require(ReplicatedStorage:WaitForChild("Critters"))
 local Ledger = require(script.Parent:WaitForChild("Ledger"))
 local Pens = require(script.Parent:WaitForChild("Pens"))
 local World = require(script.Parent:WaitForChild("Workshop"):WaitForChild("World"))
@@ -55,6 +56,7 @@ function Rustling.stealFromUnlockedPen(thief: Player, record)
 		prompt.Enabled = false
 	end
 	setCarryScale(record, Rustling.CARRY_SCALE)
+	model:SetAttribute("Gait", "carried")
 	local critterRoot = model.PrimaryPart :: BasePart
 	critterRoot.CFrame = root.CFrame * CFrame.new(0, 3.2, 0)
 	critterRoot.Anchored = false
@@ -67,6 +69,8 @@ function Rustling.stealFromUnlockedPen(thief: Player, record)
 	local name = Cast.critterById(record.id).name
 	Ledger.toast(thiefAccount, "Rustled " .. name .. "! Run it home to YOUR ranch!", Color3.fromRGB(255, 220, 90))
 	Ledger.toast(owner, thief.DisplayName .. " is rustling your " .. name .. "! Lock your gate!", RED)
+	Ledger.cue(thiefAccount, "rustle")
+	Ledger.cue(owner, "alarm")
 end
 
 function rootOf(player: Player): BasePart?
@@ -103,6 +107,8 @@ function Rustling.lockGate(account: Ledger.Account): boolean
 	account.lockedUntil = now + Cast.lockSeconds(account.rebirths)
 	Ledger.syncRancher(account)
 	Ledger.toast(account, "GATE LOCKED for " .. Cast.lockSeconds(account.rebirths) .. "s - your herd is safe", GREEN)
+	Ledger.cue(account, "lock")
+	Ledger.deed(account, { kind = "lock" })
 	return true
 end
 
@@ -164,6 +170,13 @@ function Rustling.deliverCarriedCritters()
 					task.spawn(Pens.placeCritterInPen, account, record, stall, true)
 					Critters.poof(rescueRoot, Color3.fromRGB(255, 220, 90), 16)
 					Ledger.toast(account, "Rustled " .. name .. " home! It earns for YOU now.", GREEN)
+					Ledger.cue(account, "delivered")
+					if Ledger.discover(account, record.id, record.mutation) then
+						Ledger.toast(account, "NEW in your RanchDex: " .. name .. "!", Color3.fromRGB(255, 236, 150))
+						Ledger.deed(account, { kind = "discover", id = record.id, mutation = record.mutation })
+					end
+					Ledger.syncBoard(account)
+					Ledger.deed(account, { kind = "rustle", id = record.id, mutation = record.mutation })
 					if victim and victim ~= account then
 						Ledger.toast(victim, account.name .. " got away with your " .. name .. "!", RED)
 					end
@@ -225,6 +238,7 @@ function Rustling.sendRustlerRaid(target: Player?)
 	local fromEast = rng:NextNumber() < 0.5
 	local edgeX = if fromEast then World.DRIVE_END_X + 20 else World.DRIVE_START_X - 20
 	Ledger.toast(account, "A RUSTLER is riding for your ranch! Get home and LOCK your gate (L)!", RED)
+	Ledger.cue(account, "whistle")
 	player:SetAttribute("RaidEta", workspace:GetServerTimeNow() + 9)
 
 	local model, root = Critters.buildRustler(CFrame.new(edgeX, 0, 0))
@@ -253,6 +267,8 @@ function Rustling.sendRustlerRaid(target: Player?)
 	if Ledger.isLocked(account) or not account.plot then
 		root.CFrame *= CFrame.Angles(0, math.pi, 0)
 		rideTo(root, Vector3.new(edgeX, 0, 0), Rustling.RUSTLER_SPEED * 1.4).Completed:Wait()
+		Ledger.cue(account, "lockHeld")
+		Ledger.deed(account, { kind = "repel" })
 		finish("Your locked gate held! The rustler rode off empty-handed.", GREEN)
 		return
 	end
@@ -279,6 +295,7 @@ function Rustling.sendRustlerRaid(target: Player?)
 	carried = victim
 	victim.carrier = nil
 	setCarryScale(victim, Rustling.CARRY_SCALE)
+	victim.model:SetAttribute("Gait", "carried")
 	local critterRoot = victim.model.PrimaryPart :: BasePart
 	critterRoot.CFrame = root.CFrame * CFrame.new(0, 5.5, 0)
 	local weld = Instance.new("WeldConstraint")
@@ -288,6 +305,7 @@ function Rustling.sendRustlerRaid(target: Player?)
 	victim.model.Parent = workspace
 	local name = Cast.critterById(victim.id).name
 	Ledger.toast(account, "The rustler grabbed your " .. name .. "! Catch him before he escapes!", RED)
+	Ledger.cue(account, "alarm")
 	for _, waypoint in { gate, outside, Vector3.new(edgeX + (if fromEast then 40 else -40), 0, 0) } do
 		local ride = rideTo(root, waypoint, Rustling.RUSTLER_SPEED * 0.8)
 		while ride.PlaybackState == Enum.PlaybackState.Playing and not caught do
@@ -304,10 +322,15 @@ function Rustling.sendRustlerRaid(target: Player?)
 	end
 	if caught then
 		Rustling.returnCarried(nil, victim)
-		Ledger.addCash(account, math.max(50, math.floor(Ledger.incomeOf(account) * 5)))
-		finish("You tackled the rustler! " .. name .. " is home, plus a bounty.", GREEN)
+		-- the bounty: eight seconds of your herd's income, at least $80, at most a quarter of your cash
+		local bounty = math.max(80, math.min(math.floor(Ledger.incomeOf(account) * 8), math.floor(account.cash * 0.25)))
+		Ledger.addCash(account, bounty)
+		Ledger.cue(account, "tag", bounty)
+		Ledger.deed(account, { kind = "tag", amount = bounty })
+		finish("You tackled the rustler! " .. name .. " is home, plus a " .. Cast.formatCash(bounty) .. " bounty.", GREEN)
 	else
 		victim.model:Destroy()
+		Ledger.cue(account, "fail")
 		finish("The rustler got away with your " .. name .. "...", RED)
 	end
 end

@@ -1,10 +1,12 @@
 // Rot Ranch (腐烂牧场), a roblox-brainrot-01 entry (Node 22, standard library only). The game is this
-// directory's Rojo project: a 3D ranch where you lasso absurd critters off the Cattle Drive, pen them in
-// your stalls for money a second, rustle from rivals' open gates, lock your own, outrun the rot-bull
-// stampede and rebirth for a bigger multiplier. `rojo build default.project.json --output game.rbxl`
-// builds the place; this program hands it in. It copies game.rbxl, src/, screenshots/ and PLAY.json from
-// beside this file to /output and writes /output/dossier.json, the summary the judge reads, with the
-// vendored make.fun library. screenshots/1-cover.jpg is the cover and the Roblox thumbnail.
+// directory's Rojo project: a 3D ranch where you lasso 23 absurd critters (five mutations, from Moldy x2
+// to Ghost x10) off the Cattle Drive on a visible rope, pen them for money a second, rustle from rivals'
+// open gates, lock your own, and survive the ranch's events (the rot-bull stampede, Golden Hour, the
+// Dust Devil twister) while a RanchDex, a contract board, a trail guide and an in-game soundtrack keep
+// you going toward the next rebirth. `rojo build default.project.json --output game.rbxl` builds the
+// place; this program hands it in. It copies game.rbxl, src/, screenshots/ and PLAY.json from beside
+// this file to /output and writes /output/dossier.json, the summary the judge reads, with the vendored
+// make.fun library. screenshots/1-cover.jpg is the cover and the Roblox thumbnail.
 //
 // Every name under /output starts with a letter, a digit or _ and holds only letters, digits, . _ and -: the
 // grader fails an entry whose output holds any other, so a file such as .gitkeep or .DS_Store copied in fails it.

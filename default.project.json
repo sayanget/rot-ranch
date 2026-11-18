@@ -15,30 +15,41 @@
     },
     "ReplicatedStorage": {
       "Cast": { "$path": "src/shared/Cast.luau" },
+      "Critters": { "$path": "src/shared/Critters.luau" },
       "Controls": { "$path": "src/shared/Controls.luau" },
       "RanchAction": { "$className": "RemoteEvent" },
-      "RanchToast": { "$className": "RemoteEvent" }
+      "RanchToast": { "$className": "RemoteEvent" },
+      "RanchCue": { "$className": "RemoteEvent" }
     },
     "ServerScriptService": {
       "Ranch": { "$path": "src/server/Ranch.server.luau" }
     },
     "ServerStorage": {
+      "Ledger": { "$path": "src/ranch/Ledger.luau" },
+      "Events": { "$path": "src/ranch/Events.luau" },
+      "Pens": { "$path": "src/ranch/Pens.luau" },
       "CattleDrive": { "$path": "src/ranch/CattleDrive.luau" },
       "Income": { "$path": "src/ranch/Income.luau" },
-      "Ledger": { "$path": "src/ranch/Ledger.luau" },
-      "Pens": { "$path": "src/ranch/Pens.luau" },
-      "Rebirth": { "$path": "src/ranch/Rebirth.luau" },
       "Rustling": { "$path": "src/ranch/Rustling.luau" },
+      "Rebirth": { "$path": "src/ranch/Rebirth.luau" },
       "Stampede": { "$path": "src/ranch/Stampede.luau" },
+      "GoldenHour": { "$path": "src/ranch/GoldenHour.luau" },
+      "DustDevil": { "$path": "src/ranch/DustDevil.luau" },
+      "Contracts": { "$path": "src/ranch/Contracts.luau" },
+      "Guide": { "$path": "src/ranch/Guide.luau" },
+      "Showcase": { "$path": "src/ranch/Showcase.luau" },
       "Workshop": {
         "$className": "Folder",
-        "Critters": { "$path": "src/workshop/Critters.luau" },
+        "Mood": { "$path": "src/workshop/Mood.luau" },
         "World": { "$path": "src/workshop/World.luau" }
       }
     },
     "StarterPlayer": {
       "StarterPlayerScripts": {
-        "Hud": { "$path": "src/client/Hud.luau" }
+        "Hud": { "$path": "src/client/Hud.luau" },
+        "RanchDex": { "$path": "src/client/RanchDex.luau" },
+        "RanchAudio": { "$path": "src/client/RanchAudio.luau" },
+        "CritterMotion": { "$path": "src/client/CritterMotion.luau" }
       }
     },
     "Workspace": {
@@ -241,46 +252,13 @@
     },
     "Lighting": {
       "$properties": {
-        "Ambient": [0.36, 0.3, 0.26],
-        "OutdoorAmbient": [0.62, 0.52, 0.42],
-        "Brightness": 2.6,
-        "ClockTime": 16.4,
-        "GeographicLatitude": 30,
-        "ColorShift_Top": [1, 0.86, 0.66],
-        "EnvironmentDiffuseScale": 0.5,
-        "EnvironmentSpecularScale": 0.4,
-        "GlobalShadows": true,
-        "Outlines": false,
         "Technology": "Future"
-      },
-      "PrairieHaze": {
-        "$className": "Atmosphere",
-        "$properties": {
-          "Density": 0.28,
-          "Offset": 0.1,
-          "Color": [0.96, 0.82, 0.62],
-          "Decay": [0.86, 0.56, 0.36],
-          "Glare": 0.3,
-          "Haze": 1.4
-        }
-      },
-      "GoldenHour": {
-        "$className": "ColorCorrectionEffect",
-        "$properties": {
-          "Brightness": 0.03,
-          "Contrast": 0.08,
-          "Saturation": 0.18,
-          "TintColor": [1, 0.96, 0.9]
-        }
-      },
-      "SunGlow": {
-        "$className": "BloomEffect",
-        "$properties": { "Intensity": 0.35, "Size": 24, "Threshold": 1.4 }
       }
     },
     "SoundService": {
       "$properties": {
-        "RespectFilteringEnabled": true
+        "RespectFilteringEnabled": true,
+        "AmbientReverb": "Plain"
       }
     }
   }
