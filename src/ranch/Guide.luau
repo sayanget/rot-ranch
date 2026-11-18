@@ -20,11 +20,12 @@ local function advance(account: Ledger.Account)
 		Ledger.addCash(account, Guide.BONUS)
 		account.luckUntil = math.max(workspace:GetServerTimeNow(), account.luckUntil) + 60
 		Ledger.syncRancher(account)
-		Ledger.toast(account, "TRAIL COMPLETE! +$" .. Guide.BONUS .. " and a Lucky Horseshoe. You're a real rancher now.", GOLD)
+		Ledger.toast(account, "TRAIL COMPLETE! +$" .. Guide.BONUS .. " and a Lucky Horseshoe for 60s. You're a real rancher now!", GOLD)
 	end
 end
 
--- Ticks the current step when the matching deed happens.
+-- Ticks the current step when the matching deed happens. Rustling a critter home counts for the
+-- LASSO step too, so a rancher who starts out as a thief isn't stuck on step one.
 function Guide.recordDeed(account: Ledger.Account, deed: Ledger.Deed)
 	local step = Guide.STEPS[account.guideStep]
 	if not step then

@@ -31,7 +31,8 @@ local luckOfRanchers: () -> number
 local leaveDrive: (DriveEntry) -> ()
 local handOf: (Player) -> BasePart?
 
--- Lasso: pay the price, the rope flies, and the critter sails to your first free stall.
+-- Lasso: pay the price, the rope flies, and the critter sails to your first free stall. A critter
+-- someone else already roped, a full pen or a thin wallet stops the throw before any cash moves.
 function CattleDrive.lassoCritter(player: Player, entry: DriveEntry)
 	local account = Ledger.accountOf(player)
 	if entry.sold or not account or not account.plot then
@@ -45,7 +46,7 @@ function CattleDrive.lassoCritter(player: Player, entry: DriveEntry)
 		return
 	end
 	if not Ledger.spendCash(account, entry.price) then
-		Ledger.toast(account, "Need " .. Cast.formatCash(entry.price) .. " to lasso " .. critter.name, Color3.fromRGB(255, 120, 100))
+		Ledger.toast(account, "You need " .. Cast.formatCash(entry.price) .. " to lasso the " .. critter.name .. "!", Color3.fromRGB(255, 120, 100))
 		Ledger.cue(account, "deny")
 		return
 	end
@@ -166,7 +167,8 @@ function CattleDrive.spawnDriveCritter(forceId: string?, forceMutation: string?)
 	return entry
 end
 
--- Puts a critter partway down the drive at once (used to fill the drive when the server starts).
+-- Jumps a critter `fraction` of the way down the drive (0 = corral, 1 = canyon) and lets it trot on
+-- from there; used to fill the drive when the server starts.
 function CattleDrive.fastForward(entry: DriveEntry, fraction: number)
 	if not entry.tween then
 		return

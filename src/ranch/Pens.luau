@@ -15,6 +15,8 @@ local Pens = {}
 
 local plots: { World.Plot } = {}
 local plotOwner: { [number]: Ledger.Account } = {}
+-- Ranch claim order (indices into World's plot centres): players start in the middle north ranch
+-- and then fill the south row; rival bots take the remaining north ranches and the south middle.
 local PLAYER_ORDER = { 1, 5, 6, 2, 4, 3 }
 local BOT_ORDER = { 3, 4, 2 }
 local addRustlePrompt: (Ledger.CritterRecord) -> ()
@@ -163,7 +165,6 @@ function Pens.ranchAt(position: Vector3): (World.Plot?, Ledger.Account?)
 	return nil, nil
 end
 
-
 -- Lifts a critter out of its stall (for a rustler or a rebirth); it stops earning at once.
 function Pens.takeCritterFromPen(record: Ledger.CritterRecord): Ledger.Account?
 	local owner = record.owner
@@ -179,7 +180,8 @@ function addRustlePrompt(record: Ledger.CritterRecord)
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "RustlePrompt"
 	prompt.ActionText = "Rustle!"
-	prompt.ObjectText = Cast.critterById(record.id).name
+	-- Name the mutation too, the same way the drive's Lasso prompt does, so a Golden one stands out.
+	prompt.ObjectText = (if record.mutation then record.mutation .. " " else "") .. Cast.critterById(record.id).name
 	prompt.HoldDuration = 1.2
 	prompt.MaxActivationDistance = 11
 	prompt.RequiresLineOfSight = false

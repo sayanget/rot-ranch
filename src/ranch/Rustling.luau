@@ -40,7 +40,7 @@ function Rustling.stealFromUnlockedPen(thief: Player, record)
 		return
 	end
 	if thiefAccount.carrying then
-		Ledger.toast(thiefAccount, "Your hands are full - run it home first!", RED)
+		Ledger.toast(thiefAccount, "Your hands are full - run that one home first!", RED)
 		return
 	end
 	if not Pens.freeStallOf(thiefAccount) then
@@ -204,7 +204,8 @@ function Rustling.tickGates()
 	end
 end
 
--- Rival bots lock for a while, then leave the gate open long enough to be rustled from.
+-- Rival bots lock for a while, then leave the gate open long enough to be rustled from. Each rival
+-- (by account order i) gets its own lock and open lengths, so their gates drift out of step.
 function Rustling.cycleRivalGates()
 	local now = workspace:GetServerTimeNow()
 	for i, account in Ledger.allAccounts() do
@@ -304,7 +305,7 @@ function Rustling.sendRustlerRaid(target: Player?)
 	critterRoot.Anchored = false
 	victim.model.Parent = workspace
 	local name = Cast.critterById(victim.id).name
-	Ledger.toast(account, "The rustler grabbed your " .. name .. "! Catch him before he escapes!", RED)
+	Ledger.toast(account, "The rustler grabbed your " .. name .. "! Tag them before they reach the edge!", RED)
 	Ledger.cue(account, "alarm")
 	for _, waypoint in { gate, outside, Vector3.new(edgeX + (if fromEast then 40 else -40), 0, 0) } do
 		local ride = rideTo(root, waypoint, Rustling.RUSTLER_SPEED * 0.8)
